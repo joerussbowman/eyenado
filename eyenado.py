@@ -22,6 +22,9 @@ import tornado.ioloop
 import tornado.options
 import tornado.template
 
+CONFIG_PATH = "etc/"
+CONFIG_FILE = CONFIG_PATH + "server.conf"
+SNAPSHOTS_PATH = "snapshots/"
 
 # web server application and handlers
 class CoreHandler(tornado.web.RequestHandler):
@@ -40,7 +43,14 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class ConfigHandler(CoreHandler):
     def get(self):
+        # TODO: Add support for advanced options like authentication
         self.render("config.tpl")
+
+    def post(self):
+        # TODO: Add support for advanced options like authentication
+        name = self.get_argument("name", None)
+        host = self.get_argument("host", None)
+        self.redirect("/config/")
 
 class MainHandler(BaseHandler):
     def get(self):
@@ -59,8 +69,16 @@ class Application(tornado.web.Application):
             xsrf_cookies=True,
             debug=True,
         )
-        self.config_file = "etc/server.conf"
+        if not os.path.exists(CONFIG_PATH):
+            os.makedirs(CONFIG_PATH)
+        if not os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'w') as config_f:
+                config_f.write(tornado.escape.json_encode({}))
+        if not os.path.exists(SNAPSHOTS_PATH):
+            os.makedirs(SNAPSHOTS_PATH)
+
         self.cameras = []
+      
         tornado.web.Application.__init__(self, handlers, ** settings)
 
 application = Application()
@@ -72,24 +90,21 @@ def load_config():
             camera.loop.stop()
     # reset camera list
     cameras = []
-    with open(application.config_file, 'r') as config_f:
+    with open(CONFIG_FILE, 'r') as config_f:
         config_json = config_f.read()
     application.config = tornado.escape.json_decode(config_json)
-    for camera in application.config["cameras"]:
-        c = detect.Camera(ioloop, **camera)
-        c.loop = tornado.ioloop.PeriodicCallback(c.monitor, c.pull_speed, ioloop)
-        c.loop.start()
-        application.cameras.append(c)
+    if "cameras" in application.config:
+        for camera in application.config["cameras"]:
+            c = detect.Camera(ioloop, **camera)
+            c.loop = tornado.ioloop.PeriodicCallback(c.monitor, c.pull_speed, ioloop)
+            c.loop.start()
+            application.cameras.append(c)
 
 def write_config(blank=False):
     pass
 
 ioloop = tornado.ioloop.IOLoop.instance()
 
-#cameras = [
-#        detect.Camera("outdoor1", "192.168.1.10", ioloop),
-#        ]
-# fire it up!
 if __name__ == "__main__":
     load_config()
     application.listen(8888)

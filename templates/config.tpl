@@ -8,13 +8,19 @@
                 {% for camera in cameras %}
                     <div class="well">
                         <form class="form-inline" action="/config/" method="post">
+                            {% module xsrf_form_html() %}
                             <input type=hidden name="camera.name" value="{{ camera.name }}">
                             <strong>{{ camera.name }}</strong>: {{ camera.host }} <button name="do" value="delete" type="submit" class="btn">Delete</button>
                         </form>
                     </div>
                 {% end %}
+            {% else %}
+            <div>
+                Thank you for installing Eyenado. Please use the form below to start adding your cameras.
+            </div>
             {% end %}
             <form class="form-inline" action="/config/" method="post">
+                {% module xsrf_form_html() %}
                 <legend>Add a camera</legend>
                 <input type="text" placeholder="Camera name" name="camera.name">
                 <input type="text" placeholder="Camera host" name="camera.host">
