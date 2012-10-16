@@ -27,6 +27,7 @@ import Image
 import base64
 import urllib
 import urllib2
+import logging
 import datetime
 import cStringIO
 import ImageChops
@@ -91,9 +92,14 @@ class Camera:
         """
         while len(self.images) > 1:
             self.images.pop(0)
-        response = yield tornado.gen.Task(self.http_client.fetch, self.request)
-        img_data = cStringIO.StringIO(response.body)
-        self.images.append(Image.open(img_data))
+        self.http_client.fetch(self.request, callback=(yield tornado.gen.Callback("process")))
+        response = yield tornado.gen.Wait("process")
+        if not response.error:
+            img_data = cStringIO.StringIO(response.body)
+            self.images.append(Image.open(img_data))
+        else:
+            
+
         callback()
     
     @tornado.gen.engine

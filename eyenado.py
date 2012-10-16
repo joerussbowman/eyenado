@@ -31,6 +31,9 @@ class CoreHandler(tornado.web.RequestHandler):
     def render_string(self, template_name, **kwargs):
         kwargs['cameras'] = self.application.cameras
         return super(CoreHandler, self).render_string(template_name, **kwargs)
+
+    def error_page(self, error_msg):
+        self.render("error.tpl", error_msg=error_msg)
         
 class BaseHandler(tornado.web.RequestHandler):
     """ BaseHandler is the base class for all request handlers
@@ -48,8 +51,24 @@ class ConfigHandler(CoreHandler):
 
     def post(self):
         # TODO: Add support for advanced options like authentication
-        name = self.get_argument("name", None)
-        host = self.get_argument("host", None)
+        # TODO: Check camera host is a valid camera when added
+        name = self.get_argument("camera.name", None)
+        host = self.get_argument("camera.host", None)
+        if not name:
+            self.error_page("You did not give your camera a name")
+            return
+        if not name.isalnum():
+            self.error_page("Camera names must be alphanumeric")
+            return
+        if not host:
+            self.error_page("You did not specify a host for your camera. Host is usually the ipaddress of your camera.")
+            return
+        if "cameras" in self.application.config:
+            self.application.config["cameras"].append({"name": name, "host": host})
+        else:
+            self.application.config["cameras"] = [{"name": name, "host": host}]
+        write_config()
+
         self.redirect("/config/")
 
 class MainHandler(BaseHandler):
@@ -92,7 +111,7 @@ def load_config():
     cameras = []
     with open(CONFIG_FILE, 'r') as config_f:
         config_json = config_f.read()
-    application.config = tornado.escape.json_decode(config_json)
+        application.config = tornado.escape.json_decode(config_json)
     if "cameras" in application.config:
         for camera in application.config["cameras"]:
             c = detect.Camera(ioloop, **camera)
@@ -101,7 +120,9 @@ def load_config():
             application.cameras.append(c)
 
 def write_config(blank=False):
-    pass
+    with open(CONFIG_FILE, 'w') as config_f:
+        config_f.write(tornado.escape.json_encode(application.config))
+    load_config()
 
 ioloop = tornado.ioloop.IOLoop.instance()
 
