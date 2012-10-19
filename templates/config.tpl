@@ -11,6 +11,9 @@
                             {% module xsrf_form_html() %}
                             <input type=hidden name="camera.name" value="{{ camera.name }}">
                             <strong>{{ camera.name }}</strong>: {{ camera.host }} <button name="do" value="delete" type="submit" class="btn">Delete</button>
+                        {% if camera.errors > 2 %}
+                        <div class="alert">Monitoring of this camera has been disabled because of errors, please check it.</div>
+                        {% end %}
                         </form>
                     </div>
                 {% end %}

@@ -75,6 +75,7 @@ class Camera:
         self.request = tornado.httpclient.HTTPRequest(url=self.url, headers=self.headers)
 
         self.images = []
+        self.errors = 0
 
     @tornado.gen.engine
     def get_image(self, current=False, callback=None):
@@ -92,25 +93,25 @@ class Camera:
         """
         while len(self.images) > 1:
             self.images.pop(0)
-        self.http_client.fetch(self.request, callback=(yield tornado.gen.Callback("process")))
-        response = yield tornado.gen.Wait("process")
+        response = yield tornado.gen.Task(self.http_client.fetch, self.request)
         if not response.error:
             img_data = cStringIO.StringIO(response.body)
             self.images.append(Image.open(img_data))
         else:
-            
+            self.errors += 1
 
         callback()
     
     @tornado.gen.engine
     def monitor(self):
-        while len(self.images) < 2:
+        while len(self.images) < 2 and self.errors < 3:
             yield tornado.gen.Task(self.get_image)
-        entropy = Images().do_comparison(self.images)
-        self.images.pop(0)
-        print entropy
-        if entropy > self.threshold:
-            print "over threshold "
+        if self.errors < 3:
+            entropy = Images().do_comparison(self.images)
+            self.images.pop(0)
+            print entropy
+            if entropy > self.threshold:
+                print "over threshold "
 
 class Images:
     def do_comparison(self, images):

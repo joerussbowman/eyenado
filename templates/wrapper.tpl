@@ -17,6 +17,10 @@
       .sidebar-nav {
         padding: 9px 0;
       }
+      .cam {
+          width: 160px;
+          height: 120px;
+      }
     </style>
 </head>
 <body>
@@ -28,12 +32,11 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="#">Eyenado</a>
+          <a class="brand" href="/">Eyenado</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li class="active"><a href="#">Home</a></li>
-              <li><a href="#about">Cameras</a></li>
-              <li><a href="#contact">Configuration</a></li>
+              <li class="active"><a href="/">Home</a></li>
+              <li><a href="/config/">Configure</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -44,5 +47,9 @@
 {% end %}
     </div>
 <script src="{{ static_url("js/jquery-1.8.2.min.js") }}"></script>
+<script>
+{% block javascript %}
+{% end %}
+</script>
 </body>
 </html>

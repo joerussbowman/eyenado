@@ -35,13 +35,13 @@ class CoreHandler(tornado.web.RequestHandler):
     def error_page(self, error_msg):
         self.render("error.tpl", error_msg=error_msg)
         
-class BaseHandler(tornado.web.RequestHandler):
+class BaseHandler(CoreHandler):
     """ BaseHandler is the base class for all request handlers
     except the special config handler. It will redirect to /config/
     if there is no camera configuration.
     """
     def prepare(self, * args, ** kwargs):
-        if not "cameras" in globals() or len(cameras) < 1:
+        if len(self.application.cameras) < 1:
             self.redirect("/config/")
 
 class ConfigHandler(CoreHandler):
@@ -52,23 +52,30 @@ class ConfigHandler(CoreHandler):
     def post(self):
         # TODO: Add support for advanced options like authentication
         # TODO: Check camera host is a valid camera when added
+        do = self.get_argument("do", None)
         name = self.get_argument("camera.name", None)
         host = self.get_argument("camera.host", None)
-        if not name:
-            self.error_page("You did not give your camera a name")
-            return
-        if not name.isalnum():
-            self.error_page("Camera names must be alphanumeric")
-            return
-        if not host:
-            self.error_page("You did not specify a host for your camera. Host is usually the ipaddress of your camera.")
-            return
-        if "cameras" in self.application.config:
-            self.application.config["cameras"].append({"name": name, "host": host})
-        else:
-            self.application.config["cameras"] = [{"name": name, "host": host}]
+        if do == "add":
+            if not name:
+                self.error_page("You did not give your camera a name")
+                return
+            if not name.isalnum():
+                self.error_page("Camera names must be alphanumeric")
+                return
+            if not host:
+                self.error_page("You did not specify a host for your camera. Host is usually the ipaddress of your camera.")
+                return
+            if "cameras" in self.application.config:
+                self.application.config["cameras"].append({"name": name, "host": host})
+            else:
+                self.application.config["cameras"] = [{"name": name, "host": host}]
+        if do == "delete":
+            for camera in self.application.config["cameras"]:
+                if camera["name"] == name:
+                    self.application.config["cameras"].remove(camera)
+                    print self.application.config
         write_config()
-
+            
         self.redirect("/config/")
 
 class MainHandler(BaseHandler):
@@ -108,7 +115,7 @@ def load_config():
         if hasattr(camera, "loop"):
             camera.loop.stop()
     # reset camera list
-    cameras = []
+    application.cameras = []
     with open(CONFIG_FILE, 'r') as config_f:
         config_json = config_f.read()
         application.config = tornado.escape.json_decode(config_json)
@@ -122,6 +129,7 @@ def load_config():
 def write_config(blank=False):
     with open(CONFIG_FILE, 'w') as config_f:
         config_f.write(tornado.escape.json_encode(application.config))
+    config_f.close()
     load_config()
 
 ioloop = tornado.ioloop.IOLoop.instance()
