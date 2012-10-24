@@ -18,8 +18,8 @@
         padding: 9px 0;
       }
       .cam {
-          width: 160px;
-          height: 120px;
+          width: 320px;
+          height: 240px;
       }
     </style>
 </head>

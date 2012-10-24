@@ -1,15 +1,22 @@
 {% extends "wrapper.tpl" %}
 {% block body %}
-    <h1>Hello World</h1>
+    <h1>Eyenado</h1>
     {% for camera in cameras %}
-        <img class="cam" src="http://{{camera.host}}/snapshot.cgi?user={{camera.user}}&password={{camera.password}}">
+        <h2>{{ camera.name }}</h2>
+        <img class="cam" src="/getimage/{{ camera.name }}/?ts=">
     {% end %}
 {% end %}
 {% block javascript %}
 jQuery(function($) {
     $(document).ready(function() {
         setInterval(function(){
-            $('.cam').attr('src', $(this).attr('src')+'&'+Math.random());
+            $('.cam').each(function() {
+                var jqt = $(this);
+                var src = jqt.attr('src');
+                src = src.substr(0,src.indexOf('?'));
+                src += '?_ts=' + new Date().getTime();
+                jqt.attr('src',src);
+            });
         }, 500);
     });
 });

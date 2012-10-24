@@ -16,6 +16,7 @@
 
 import os
 import detect
+import cStringIO
 import tornado.web
 import tornado.escape
 import tornado.ioloop
@@ -55,6 +56,8 @@ class ConfigHandler(CoreHandler):
         do = self.get_argument("do", None)
         name = self.get_argument("camera.name", None)
         host = self.get_argument("camera.host", None)
+        user = self.get_argument("camera.user", None)
+        password = self.get_argument("camera.password", None)
         if do == "add":
             if not name:
                 self.error_page("You did not give your camera a name")
@@ -66,7 +69,7 @@ class ConfigHandler(CoreHandler):
                 self.error_page("You did not specify a host for your camera. Host is usually the ipaddress of your camera.")
                 return
             if "cameras" in self.application.config:
-                self.application.config["cameras"].append({"name": name, "host": host})
+                self.application.config["cameras"].append({"name": name, "host": host, "user": user, "password": password})
             else:
                 self.application.config["cameras"] = [{"name": name, "host": host}]
         if do == "delete":
@@ -82,11 +85,29 @@ class MainHandler(BaseHandler):
     def get(self):
         self.render("main.tpl")
 
+class GetImage(CoreHandler):
+    def get(self, cam):
+        print cam
+        if not cam:
+            raise tornado.web.HTTPError(404)
+        for camera in self.application.cameras:
+            if camera.name == cam:
+               img_data = cStringIO.StringIO()
+               camera.images[0].save(img_data, format="JPEG")
+               img_data.seek(0)
+               content = img_data.getvalue()
+               self.write(content)
+               self.set_header('Content-Type', 'image/jpg')
+               self.flush()
+               self.finish()
+        raise tornado.web.HTTPError(404)
+
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
             ("/", MainHandler),
             ("/config/?", ConfigHandler),
+            ("/getimage/(.*?)/?", GetImage),
         ]
         settings = dict(
             cookie_secret = "40daa7fd545251e59e6ded007abd4f7b7b9762f8",

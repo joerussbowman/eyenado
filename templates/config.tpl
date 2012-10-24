@@ -27,6 +27,8 @@
                 <legend>Add a camera</legend>
                 <input type="text" placeholder="Camera name" name="camera.name">
                 <input type="text" placeholder="Camera host" name="camera.host">
+                <input type="text" placeholder="Camera user (blank for none)" name="camera.user">
+                <input type="password" placeholder="Camera password (blank for none)" name="camera.password">
                 <button name="do" value="add" type="submit" class="btn">Add Camera</button>
             </form>
         </div>

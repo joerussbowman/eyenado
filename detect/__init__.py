@@ -36,7 +36,7 @@ import tornado.httpclient
 import tornado.gen
 
 class Camera:
-    def __init__(self, ioloop, name, host, user="admin", password="", cam_type="foscam", threshold=1200, pull_speed=500):
+    def __init__(self, ioloop, name, host, user=False, password="", url="/snapshot.cgi", ssl=False, threshold=1200, pull_speed=500):
         """ Camera is the primary interface to the camera.
 
         ioloop:     The ioloop this application is running in, used for
@@ -46,8 +46,8 @@ class Camera:
                     http://, ie: 192.168.1.10
         user:       the user name to connect to the server as
         password:   the password for the user
-        cam_type:   string to identify the camera type, currenly only foscam
-                    is supported
+        url:        url to get picutres from, off of host, ie: /snapshot.cgi
+        ssl:         If true will use https, otherwise uses http
         threshold:  the amount of acceptable entropy between images to detect
                     motion. 1200 worked for a camera behind a window with
                     a screen. You may need to adjust this based on camera
@@ -63,16 +63,24 @@ class Camera:
         self.ioloop = ioloop
         self.user = user
         self.password = password
-        self.cam_type = cam_type
+        self.url = url
+        self.ssl = ssl
         self.threshold = threshold
         self.pull_speed = pull_speed
 
-        self.current_image = None
-        base64string = base64.encodestring('%s:%s' % (self.user, self.password)).replace('\n', '')
         self.http_client = tornado.httpclient.AsyncHTTPClient()
-        self.url = "http://%s/snapshot.cgi" % self.host
-        self.headers = {"Authorization": "Basic %s" % base64string}
-        self.request = tornado.httpclient.HTTPRequest(url=self.url, headers=self.headers)
+        if self.ssl:
+            self.url = "https://%s%s" % (self.host, self.url)
+        else:
+            self.url = "http://%s%s" % (self.host, self.url)
+        if self.user:
+            if self.password == None:
+                self.password = ""
+            base64string = base64.encodestring('%s:%s' % (self.user, self.password)).replace('\n', '')
+            self.headers = {"Authorization": "Basic %s" % base64string}
+            self.request = tornado.httpclient.HTTPRequest(url=self.url, headers=self.headers)
+        else:
+            self.request = tornado.httpclient.HTTPRequest(url=self.url)
 
         self.images = []
         self.errors = 0
@@ -99,6 +107,8 @@ class Camera:
             self.images.append(Image.open(img_data))
         else:
             self.errors += 1
+            if self.errors >= 3:
+                logging.error("Shutting down camera %s because of errors" % self.name)
 
         callback()
     
