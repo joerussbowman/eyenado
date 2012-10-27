@@ -109,6 +109,7 @@ class Camera:
             self.errors += 1
             if self.errors >= 3:
                 logging.error("Shutting down camera %s because of errors" % self.name)
+                logging.error(response.error)
 
         callback()
     

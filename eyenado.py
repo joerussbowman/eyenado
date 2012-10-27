@@ -100,6 +100,7 @@ class GetImage(CoreHandler):
                self.set_header('Content-Type', 'image/jpg')
                self.flush()
                self.finish()
+               return
         raise tornado.web.HTTPError(404)
 
 class Application(tornado.web.Application):
