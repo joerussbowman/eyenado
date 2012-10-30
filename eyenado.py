@@ -31,6 +31,7 @@ SNAPSHOTS_PATH = "snapshots/"
 class CoreHandler(tornado.web.RequestHandler):
     def render_string(self, template_name, **kwargs):
         kwargs['cameras'] = self.application.cameras
+        kwargs['config'] = self.application.config
         return super(CoreHandler, self).render_string(template_name, **kwargs)
 
     def error_page(self, error_msg):
@@ -58,6 +59,8 @@ class ConfigHandler(CoreHandler):
         host = self.get_argument("camera.host", None)
         user = self.get_argument("camera.user", None)
         password = self.get_argument("camera.password", None)
+        password = self.get_argument("camera.password", None)
+        savepath = self.get_argument("savepath", None)
         if do == "add":
             if not name:
                 self.error_page("You did not give your camera a name")
@@ -76,7 +79,10 @@ class ConfigHandler(CoreHandler):
             for camera in self.application.config["cameras"]:
                 if camera["name"] == name:
                     self.application.config["cameras"].remove(camera)
-                    print self.application.config
+        if do == "savepath" and savepath != None:
+            if savepath[-1] != "/":
+                savepath = "%s/" % savepath
+            self.application.config["savepath"] = savepath
         write_config()
             
         self.redirect("/config/")
@@ -87,11 +93,10 @@ class MainHandler(BaseHandler):
 
 class GetImage(CoreHandler):
     def get(self, cam):
-        print cam
         if not cam:
             raise tornado.web.HTTPError(404)
         for camera in self.application.cameras:
-            if camera.name == cam:
+            if camera.name == cam and hasattr(camera, "images"):
                img_data = cStringIO.StringIO()
                camera.images[0].save(img_data, format="JPEG")
                img_data.seek(0)
@@ -143,7 +148,7 @@ def load_config():
         application.config = tornado.escape.json_decode(config_json)
     if "cameras" in application.config:
         for camera in application.config["cameras"]:
-            c = detect.Camera(ioloop, **camera)
+            c = detect.Camera(ioloop, application, **camera)
             c.loop = tornado.ioloop.PeriodicCallback(c.monitor, c.pull_speed, ioloop)
             c.loop.start()
             application.cameras.append(c)

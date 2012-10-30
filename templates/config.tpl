@@ -3,6 +3,17 @@
     <div class="row">
         <div class="span12">
             <h1>Config</h1>
+            <h2>
+                <form class="form-inline" action="/config/" method="post">
+                {% module xsrf_form_html() %}
+                Save Path: <input type="text" name="savepath" 
+                {% if "savepath" in config %}
+                    value="{{ config["savepath"] }}"
+                {% end %}
+                >
+                <button name="do" value="savepath" type="submit" class="btn">Save</button>
+                </form>
+            </h2>
             {% if len(cameras) > 0 %}
                 <h2>Cameras</h2>
                 {% for camera in cameras %}

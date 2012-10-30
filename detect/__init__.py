@@ -36,23 +36,24 @@ import tornado.httpclient
 import tornado.gen
 
 class Camera:
-    def __init__(self, ioloop, name, host, user=False, password="", url="/snapshot.cgi", ssl=False, threshold=1200, pull_speed=500):
+    def __init__(self, ioloop, application, name, host, user=False, password="", url="/snapshot.cgi", ssl=False, threshold=1200, pull_speed=500):
         """ Camera is the primary interface to the camera.
 
-        ioloop:     The ioloop this application is running in, used for
-                    scheduling
-        name:       Camera name
-        host:       hostname or ip address of the server, do not include 
-                    http://, ie: 192.168.1.10
-        user:       the user name to connect to the server as
-        password:   the password for the user
-        url:        url to get picutres from, off of host, ie: /snapshot.cgi
-        ssl:         If true will use https, otherwise uses http
-        threshold:  the amount of acceptable entropy between images to detect
-                    motion. 1200 worked for a camera behind a window with
-                    a screen. You may need to adjust this based on camera
-                    location.
-        pull_speed: how fast, in miliseconds to pull images from the camera. 
+        ioloop:         The ioloop this application is running in, used for
+                        scheduling
+        application:    The application object, used to access config
+        name:           Camera name
+        host:           hostname or ip address of the server, do not include 
+                        http://, ie: 192.168.1.10
+        user:           the user name to connect to the server as
+        password:       the password for the user
+        url:            url to get picutres from, off of host, ie: /snapshot.cgi
+        ssl:            If true will use https, otherwise uses http
+        threshold:      the amount of acceptable entropy between images to detect
+                        motion. 1200 worked for a camera behind a window with
+                        a screen. You may need to adjust this based on camera
+                        location.
+        pull_speed:     how fast, in miliseconds to pull images from the camera. 
 
         Each camera will have it's own http client, authentication credentials
         are sent via a base64 Authorize header. Currently ssl connections are
@@ -61,6 +62,7 @@ class Camera:
         self.name = name
         self.host = host
         self.ioloop = ioloop
+        self.application = ioloop
         self.user = user
         self.password = password
         self.url = url
@@ -123,6 +125,18 @@ class Camera:
             print entropy
             if entropy > self.threshold:
                 print "over threshold "
+                if "savepath" in self.application.config and self.application.confg["savepath"] != None:
+                    now = datetime.datetime.now()
+                    savePath = "%s%s/%s/%s" % (self.application.config["savepath"]
+                            , now.year, now.month, now.day)
+                    fileName = "%s/%s.%s.%s.%s.jpg" % (savePath, now.hour,
+                            now.minute, now.second, now.microsecond)
+                    if not os.path.exists(savePath):
+                        os.makedirs(savePath)
+                    imgCheck["img"].save(fileName, "JPEG")
+                
+                
+                
 
 class Images:
     def do_comparison(self, images):
