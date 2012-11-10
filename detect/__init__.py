@@ -127,8 +127,8 @@ class Camera:
                 print "over threshold "
                 if "savepath" in self.application.config and self.application.config["savepath"] != None:
                     now = datetime.datetime.now()
-                    savePath = "%s%s/%s/%s" % (self.application.config["savepath"]
-                            , now.year, now.month, now.day)
+                    savePath = "%s%s/%s/%s/%s" % (self.application.config["savepath"]
+                            , self.name, now.year, now.month, now.day)
                     fileName = "%s/%s.%s.%s.%s.jpg" % (savePath, now.hour,
                             now.minute, now.second, now.microsecond)
                     if not os.path.exists(savePath):
