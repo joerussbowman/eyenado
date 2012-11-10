@@ -62,7 +62,7 @@ class Camera:
         self.name = name
         self.host = host
         self.ioloop = ioloop
-        self.application = ioloop
+        self.application = application
         self.user = user
         self.password = password
         self.url = url
@@ -125,7 +125,7 @@ class Camera:
             print entropy
             if entropy > self.threshold:
                 print "over threshold "
-                if "savepath" in self.application.config and self.application.confg["savepath"] != None:
+                if "savepath" in self.application.config and self.application.config["savepath"] != None:
                     now = datetime.datetime.now()
                     savePath = "%s%s/%s/%s" % (self.application.config["savepath"]
                             , now.year, now.month, now.day)
@@ -133,7 +133,7 @@ class Camera:
                             now.minute, now.second, now.microsecond)
                     if not os.path.exists(savePath):
                         os.makedirs(savePath)
-                    imgCheck["img"].save(fileName, "JPEG")
+                    self.images[0].save(fileName, "JPEG")
                 
                 
                 
