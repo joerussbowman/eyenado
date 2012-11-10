@@ -96,6 +96,10 @@ class GetImage(CoreHandler):
         if not cam:
             raise tornado.web.HTTPError(404)
         for camera in self.application.cameras:
+            #TODO: put a pause here because on startup if someone is viewing
+            # the home page with cams there are errors spit out to the log
+            # The reason is index out of bounds because no images are pulled
+            # yet.
             if camera.name == cam and hasattr(camera, "images"):
                img_data = cStringIO.StringIO()
                camera.images[0].save(img_data, format="JPEG")
@@ -108,12 +112,21 @@ class GetImage(CoreHandler):
                return
         raise tornado.web.HTTPError(404)
 
+class ViewPics(CoreHandler):
+    def get(self, cam):
+        if not cam:
+            raise tornado.web.HTTPError(404)
+        for camera in self.application.cameras:
+            if camera.name == cam:
+                print self.application.config["savePath"] 
+
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
             ("/", MainHandler),
             ("/config/?", ConfigHandler),
             ("/getimage/(.*?)/?", GetImage),
+            ("/viewpics/(.*?)/?", ViewPics),
         ]
         settings = dict(
             cookie_secret = "40daa7fd545251e59e6ded007abd4f7b7b9762f8",

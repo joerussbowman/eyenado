@@ -3,7 +3,8 @@
     <h1>Eyenado</h1>
     {% for camera in cameras %}
         <h2>{{ camera.name }}</h2>
-        <img class="cam" src="/getimage/{{ camera.name }}/?ts=">
+        <img class="cam" src="/getimage/{{ camera.name }}/?ts="><br />
+        <a href="/viewpics/{{ camera.name }}/">View pictures</a>
     {% end %}
 {% end %}
 {% block javascript %}
