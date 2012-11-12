@@ -47,6 +47,7 @@
 {% end %}
     </div>
 <script src="{{ static_url("js/jquery-1.8.2.min.js") }}"></script>
+<script src="{{ static_url("js/bootstrap.min.js") }}"></script>
 <script>
 {% block javascript %}
 {% end %}
