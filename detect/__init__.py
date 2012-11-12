@@ -122,9 +122,7 @@ class Camera:
         if self.errors < 3:
             entropy = Images().do_comparison(self.images)
             self.images.pop(0)
-            print entropy
             if entropy > self.threshold:
-                print "over threshold "
                 if "savepath" in self.application.config and self.application.config["savepath"] != None:
                     now = datetime.datetime.now()
                     savePath = "%s%s/%s/%s/%s" % (self.application.config["savepath"]

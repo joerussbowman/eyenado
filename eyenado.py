@@ -118,7 +118,8 @@ class ViewPics(CoreHandler):
             raise tornado.web.HTTPError(404)
         for camera in self.application.cameras:
             if camera.name == cam:
-                print self.application.config["savePath"] 
+                base_dir = "%s%s" % (self.application.config["savepath"],camera.name)
+                self.write(base_dir)
 
 class Application(tornado.web.Application):
     def __init__(self):
